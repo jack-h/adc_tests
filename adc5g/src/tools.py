@@ -38,7 +38,7 @@ def get_snapshot(roach, snap_name, bitwidth=8, man_trig=True, wait_period=2):
     ROACH and returns the time-ordered samples.
     """
 
-    grab = roach.snapshot_get(snap_name, man_trig=man_trig, wait_period=wait_period)
+    grab, timestamp = roach.snapshots[snap_name].read_raw(man_trig=man_trig, man_valid=True)
     data = unpack('%ib' %grab['length'], grab['data'])
 
     return list(d for d in data)
