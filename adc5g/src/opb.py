@@ -19,7 +19,7 @@ def inc_mmcm_phase(roach, zdok_n, inc=1):
 def set_io_delay(r,zdok,core,delay,bit='all',regname='adc5g_controller'):
     ADC_BITS = 8
     if bit == 'all':
-        bit_range = range(ADC_BITS)
+        bit_range = list(range(ADC_BITS))
     else:
         bit_range = [bit]
     for i in bit_range:

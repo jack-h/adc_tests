@@ -1,7 +1,7 @@
 from math import floor
 from struct import pack, unpack
 from numpy import array, zeros
-from opb import (
+from .opb import (
     OPB_CONTROLLER,
     OPB_DATA_FMT,
     )
@@ -176,26 +176,26 @@ def set_inl_registers(roach, zdok_n, chan, offs):
 
     # create a array of 6 ints to hold the values for the registers
     regs = zeros((6), dtype='int32')
-    r = 2	# r is the relative register number.  R = 2 for 0x32 and 0x35
+    r = 2       # r is the relative register number.  R = 2 for 0x32 and 0x35
     regbit = 8 #  regbit is the bit in the register
-    for level in range(17):	# n is the bit number in the incoming bits aray
+    for level in range(17):     # n is the bit number in the incoming bits aray
         n = int(floor(0.5 + offs[level]/0.15))
         if n > 4:
             n = 4
         if n < -4:
             n = -4
-	i = level_to_bits[4-n]
-	regs[r] |= ((i >>2) & 3) << regbit
-	regs[r + 3] |= (i & 3)<< regbit
-	if regbit == 14:
-	    r -= 1
-	    regbit = 0
-	else:
-	    regbit += 2
+        i = level_to_bits[4-n]
+        regs[r] |= ((i >>2) & 3) << regbit
+        regs[r + 3] |= (i & 3)<< regbit
+        if regbit == 14:
+            r -= 1
+            regbit = 0
+        else:
+            regbit += 2
 
     set_spi_register(roach, zdok_n, CHANSEL_REG_ADDR, chan)
     for n in range(6):
-	reg_val = float(regs[n])
+        reg_val = float(regs[n])
         set_spi_register(roach, zdok_n, FIRST_EXTINL_REG_ADDR+n, reg_val)
     set_spi_register(roach, zdok_n, CALCTRL_REG_ADDR, 2)
 
@@ -209,14 +209,14 @@ def get_inl_registers(roach, zdok_n, chan):
     for n in range(6):
         regs[n] = get_spi_register(roach, zdok_n, FIRST_EXTINL_REG_ADDR-0x80+n)
 
-    r = 2	# r is the relative register number.  R = 2 for 0x32 and 0x35
-    regbit = 8	#  regbit is the bit in the register
-    for level in range(17):	# n is the bit number in the incoming bits aray
+    r = 2       # r is the relative register number.  R = 2 for 0x32 and 0x35
+    regbit = 8  #  regbit is the bit in the register
+    for level in range(17):     # n is the bit number in the incoming bits aray
         bits = 0xc & ((regs[r]>>regbit)<<2) | 3 & (regs[r+3]>>regbit)
-	offs[level] = 0.15 * bits_to_off[bits]
-	if regbit == 14:
-	    regbit = 0
-	    r -= 1
-	else:
-	    regbit += 2
+        offs[level] = 0.15 * bits_to_off[bits]
+        if regbit == 14:
+            regbit = 0
+            r -= 1
+        else:
+            regbit += 2
     return offs

@@ -1,11 +1,11 @@
 from struct import pack, unpack
-from opb import (
+from .opb import (
     OPB_CONTROLLER,
     OPB_DATA_FMT,
     inc_mmcm_phase,
     set_io_delay,
     )
-from spi import (
+from .spi import (
     get_spi_control,
     set_spi_control,
     set_spi_register,
@@ -57,7 +57,7 @@ def get_test_vector(roach, snap_names, bitwidth=8, man_trig=True, wait_period=2)
     mode.
     """
     data_out = []
-    cores_per_snap = 4/len(snap_names)
+    cores_per_snap = 4//len(snap_names)
     for snap in snap_names:
         data = get_snapshot(roach, snap, bitwidth, man_trig=man_trig, wait_period=wait_period)
         data_bin = list(((p+128)>>1) ^ (p+128) for p in data)
@@ -135,7 +135,6 @@ def calibrate_mmcm_phase(roach, zdok_n, snap_names, bitwidth=8, man_trig=True, w
         glitches = total_glitches(core_a, 8) + total_glitches(core_c, 8) + \
             total_glitches(core_b, 8) + total_glitches(core_d, 8)
         if glitches > 0:
-            print 'breaking at ps:%d with %d glitches'%(ps,glitches)
             break
         inc_mmcm_phase(roach, zdok_n)
 
@@ -148,26 +147,23 @@ def calibrate_mmcm_phase(roach, zdok_n, snap_names, bitwidth=8, man_trig=True, w
     unset_test_mode(roach, zdok_n)
     zero_glitches = [gl==0 for gl in glitches_per_ps]
     n_zero = 0
-    longest_min = None
+    longest_min = 0
     while True:
         try:
             rising  = zero_glitches.index(True, n_zero)
         except ValueError:
             break
-        print "rising, nzero", rising, n_zero
         n_zero  = rising + 1
         try:
             falling = zero_glitches.index(False, n_zero)
         except ValueError:
             falling = len(zero_glitches) - 1
-        print "falling, nzero", falling, n_zero
         n_zero  = falling + 1
         min_len = falling - rising
         if min_len > longest_min:
             longest_min = min_len
-            print "  longest_min",longest_min
-            optimal_ps = rising + int((falling-rising)/2)
-    if longest_min==None:
+            optimal_ps = rising + int((falling-rising)//2)
+    if longest_min==0:
         #raise ValueError("No optimal MMCM phase found!")
         return None, glitches_per_ps
     else:
@@ -187,7 +183,7 @@ def get_histogram(roach, zdok_n, core, fmt="hist_{zdok_n}_count_{core}", size=25
     then change the 'size' parameter.
     """
     counts = unpack('>{}Q'.format(size), roach.read(fmt.format(zdok_n=zdok_n, core=core), size*8))
-    return counts[size/2:] + counts[:size/2]
+    return counts[size//2:] + counts[:size//2]
 
 def find_best_delay(d,clk=625.,ref_clk=200.,verbose=False,offset=0,tolerance=None,reference=None):
     '''
